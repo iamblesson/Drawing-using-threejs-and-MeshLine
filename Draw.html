@@ -1,0 +1,84 @@
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+<html>
+    <head>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r119/three.min.js"></script>
+        <script src="https://unpkg.com/threejs-meshline@2.0.11/src/index.js"></script>
+        <title>Test</title>
+    </head>
+    <body>
+
+        <script>
+            let isDown = false;
+            let mouse = new THREE.Vector3(0, 0, 1);
+            const sizes = {
+              width: window.innerWidth,
+              height: window.innerHeight
+            };
+            container = document.createElement('div');
+            document.body.appendChild(container);
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.position.set(0, 0, 150);
+            scene = new THREE.Scene();
+            scene.add(camera);
+            renderer = new THREE.WebGLRenderer({
+                clearAlpha: 1
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0xcaffee, 1);
+            document.body.appendChild(renderer.domElement);
+
+
+            let points = [];
+            var canvas = document.querySelector('canvas');
+            var w = canvas.width;
+            var h = canvas.height;
+            function handleMouseMove(event) {
+              mouse.x = (event.clientX / sizes.width) * 2 - 1;
+              mouse.y = -(event.clientY / sizes.height) * 2 + 1;
+              mouse.z = 1;
+
+              // convert screen coordinates to threejs world position
+              // https://stackoverflow.com/questions/13055214/mouse-canvas-x-y-to-three-js-world-x-y-z
+              var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+              vector.unproject(camera);
+              var dir = vector.sub(camera.position).normalize();
+              var distance = -camera.position.z / dir.z;
+              var pos = camera.position.clone().add(dir.multiplyScalar(distance));
+              mouse = pos;
+            }
+            canvas.addEventListener(
+              "mousemove", function (e) {
+                if(isDown){
+                    handleMouseMove(e)
+                    points.push( new THREE.Vector3(mouse.x,mouse.y,mouse.z) );
+                    const line = new MeshLine();
+                    line.setVertices(points);
+                    const material = new MeshLineMaterial({color:0xffffff,lineWidth :3});
+                    const mesh = new THREE.Mesh( line, material );
+                    scene.add(mesh);
+                }
+              }, false);
+
+            canvas.addEventListener(
+              "mousedown", function (e) {
+                handleMouseMove(e)
+                isDown = true;
+              }, false);
+
+              canvas.addEventListener(
+              "mouseup", function (e) {
+                isDown = false;
+                points = [];
+              }, false);
+
+              renderer.render( scene, camera );
+
+              animate();
+              function animate() {
+                  requestAnimationFrame(animate);
+                  renderer.render(scene, camera);
+              }
+        </script>
+    </body>
+</html>
